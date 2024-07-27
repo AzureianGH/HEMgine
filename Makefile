@@ -20,3 +20,6 @@ clean:
 
 run: $(TARGET)
 	$(TARGET)
+
+rhdpi: $(TARGET)
+	$(TARGET) --highdpi

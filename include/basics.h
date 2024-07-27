@@ -6,6 +6,9 @@
 #include <vector>
 #include <cstdint>
 
+
+
+
 typedef enum MEMORYMAPPINGTYPE_E
 {
     NORMAL = 0,
@@ -142,9 +145,6 @@ void PopStack(uint8_t* data, int size);
 
 void SetMemorySize(uint32_t size);
 
-void SetMemoryAddress(int address, int value);
-int GetMemoryAddress(int address);
-
 bool IsProtectedMemory(int address);
 bool IsProtectedMemoryRange(int start, int end);
 
@@ -159,7 +159,6 @@ MemoryMappingType_t GetMemoryMappingType(int address);
 int GetMemoryMappingRedirect(int address);
 MemoryChunk_t* GetAddressesFromMappingType(MemoryMappingType_t type);
 
-
 void SetDefaultRegisters();
 void SetDefaultFlags();
 void SetDefaultStack();
@@ -168,3 +167,6 @@ void SetDefaultProtectedMemory();
 
 void SetDefaultMemoryMappings();
 void SetDefaultMemoryMapping(int start, int end, MemoryMappingType_t type, int redirect);
+
+void SetMemoryAddress(int address, int value);
+int GetMemoryAddress(int address);

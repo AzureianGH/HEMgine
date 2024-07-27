@@ -1,5 +1,5 @@
 #include <basics.h>
-
+#include <idt.h>
 uint32_t GetRegister32(CPURegister32_t reg)
 {
     return CPURegisters32[reg];
@@ -84,7 +84,7 @@ void SetMemoryAddress(int address, int value)
 {
     if (IsProtectedMemory(address))
     {
-        return;
+        CallInterrupt(0xD); // General Protection Fault because we are trying to write to protected memory
     }
     Memory[address] = value;
 }
@@ -146,6 +146,83 @@ bool UnlockProtectedMemory(int address)
             return true;
         }
     }
+}
+
+void SetMemoryMapping(MemoryMapping_t mapping)
+{
+    MemoryMappings.push_back(mapping);
+}
+
+MemoryMapping_t GetMemoryMapping(int address)
+{
+    for (int i = 0; i < sizeof(MemoryMappings) / sizeof(MemoryMapping_t); i++)
+    {
+        if (address >= MemoryMappings[i].StartAddress && address <= MemoryMappings[i].EndAddress)
+        {
+            return MemoryMappings[i];
+        }
+    }
+}
+
+bool IsMemoryMapped(int address)
+{
+    for (int i = 0; i < sizeof(MemoryMappings) / sizeof(MemoryMapping_t); i++)
+    {
+        if (address >= MemoryMappings[i].StartAddress && address <= MemoryMappings[i].EndAddress)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+MemoryMappingType_t GetMemoryMappingType(int address)
+{
+    for (int i = 0; i < sizeof(MemoryMappings) / sizeof(MemoryMapping_t); i++)
+    {
+        if (address >= MemoryMappings[i].StartAddress && address <= MemoryMappings[i].EndAddress)
+        {
+            return MemoryMappings[i].Type;
+        }
+    }
+}
+
+int GetMemoryMappingRedirect(int address)
+{
+    for (int i = 0; i < sizeof(MemoryMappings) / sizeof(MemoryMapping_t); i++)
+    {
+        if (address >= MemoryMappings[i].StartAddress && address <= MemoryMappings[i].EndAddress)
+        {
+            return MemoryMappings[i].RedirectAddress;
+        }
+    }
+}
+
+MemoryChunk_t* GetAddressesFromMappingType(MemoryMappingType_t type)
+{
+    MemoryChunk_t* addresses = new MemoryChunk_t[sizeof(MemoryMappings) / sizeof(MemoryMapping_t)];
+    int count = 0;
+    for (int i = 0; i < sizeof(MemoryMappings) / sizeof(MemoryMapping_t); i++)
+    {
+        if (MemoryMappings[i].Type == type)
+        {
+            addresses[count].StartAddress = MemoryMappings[i].StartAddress;
+            addresses[count].EndAddress = MemoryMappings[i].EndAddress;
+            count++;
+        }
+    }
+    return addresses;
+}
+
+void SetDefaultMemoryMappings()
+{
+    return; // None for now
+}
+
+void SetDefaultMemoryMapping(int start, int end, MemoryMappingType_t type, int redirect)
+{
+    MemoryMapping_t mapping = {start, end, type, redirect};
+    SetMemoryMapping(mapping);
 }
 
 void SetDefaultRegisters()
