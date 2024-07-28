@@ -8,6 +8,12 @@
 
 
 
+typedef struct MEMORYCHUNK_S
+{
+    int StartAddress;
+    int EndAddress;
+    int Size;
+} MemoryChunk_t;
 
 typedef enum MEMORYMAPPINGTYPE_E
 {
@@ -16,12 +22,7 @@ typedef enum MEMORYMAPPINGTYPE_E
     FRAMEBUFFER = 2,
     VGATEXT = 3
 } MemoryMappingType_t;
-typedef struct MEMORYCHUNK_S
-{
-    int StartAddress;
-    int EndAddress;
-    int Size;
-} MemoryChunk_t;
+
 typedef struct MEMORYMAPPING_S
 {
     int StartAddress;
@@ -173,5 +174,12 @@ void SetDefaultProtectedMemory();
 void SetDefaultMemoryMappings();
 void SetDefaultMemoryMapping(int start, int end, MemoryMappingType_t type, int redirect);
 
-void SetMemoryAddress(int address, int value);
-int GetMemoryAddress(int address);
+void SetMemoryAddress8(uint32_t address, uint8_t value);
+void SetMemoryAddress16(uint32_t address, uint16_t value);
+void SetMemoryAddress32(uint32_t address, uint32_t value);
+uint8_t GetMemoryAddress8(uint32_t address);
+uint16_t GetMemoryAddress16(uint32_t address);
+uint32_t GetMemoryAddress32(uint32_t address);
+void DumpMemory(int Start, int End);
+bool LoadIntoMemory(uint8_t *Data, int StartAddress, int Size, bool BIOSOffsetted = true);
+uint8_t* LoadFromMemory(int StartAddress, int EndAddress, bool BIOSOffsetted = true, bool TreatEndAsSize = false);

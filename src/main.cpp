@@ -10,6 +10,7 @@
 #include <vcpu.h>
 #include <idt.h>
 #include <printer.h>
+#include <debuggerprint.h>
 using namespace std;
 uint32_t ParseMemorySize(char* memsize)
 {
@@ -47,6 +48,24 @@ uint32_t ParseMemorySize(char* memsize)
 
 }
 bool MemorySet = false;
+
+void PrintVGAString(char* str)
+{
+    for (int i = 0; i < strlen(str); i++)
+    {
+        SetRegister32(RA, 0x1);
+        SetRegister32(RB, 0x0);
+        SetRegister32(RC, str[i]);
+        SetRegister32(RD, 0x0F);
+        CallInterrupt(0x15);
+    }
+}
+typedef struct TestStruct
+{
+    uint32_t a;
+    uint32_t b;
+    uint32_t c;
+} TestStruct;
 int main(int argc, char** argv)
 {
     //check dpi of screen
@@ -108,27 +127,36 @@ int main(int argc, char** argv)
     InitVGAPrinter();
     InitDefaultBIOSIDT();
     SetupStack();
-    //print 'A' to screen using interrupt
-    SetRegister32(RA, 0x0);
-    SetRegister32(RB, 0x0);
-    SetMemoryAddress(0, 0x41);
-    //push 0x0F to stack
-    PushStack(0x0F, sizeof(uint32_t));
-    DumpStack();
-    PopStack(RD, sizeof(uint32_t));
-    DumpStack();
-    CallInterrupt(0x13);
+    SetDefaultMemory();
+    SetDefaultProtectedMemory();
+    
+    TestStruct test;
+    test.a = 0x1;
+    test.b = 0x2;
+    test.c = 0x3;
+
+    //load test struct into memory
+    LoadIntoMemory((uint8_t*)&test, 0x1, sizeof(TestStruct), true);
+
+    //load bios tag from memory, 0x0 -> 0x8
+    char* BiosTag = (char*)LoadFromMemory(0x0, 0x8, false);
+
+    PrintVGAString(BiosTag);
+    DumpMemory(0x0, 0x10);
+    printf("\n");
+    //dump memory of test struct
+    DumpMemory(0x1000001, 0x1000001 + sizeof(TestStruct));
+    
+    
     while (!WindowShouldClose())
     {
         BeginDrawing();
         ClearBackground(BLACK);
         PrintVGABuffer();
-        //DrawFPS(10, 10);
         EndDrawing();
     }
     
 
     CloseWindow();
-    //close all threads
     return EXIT_SUCCESS;
 }
