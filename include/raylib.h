@@ -187,6 +187,12 @@
 #define BEIGE      CLITERAL(Color){ 211, 176, 131, 255 }   // Beige
 #define BROWN      CLITERAL(Color){ 127, 106, 79, 255 }    // Brown
 #define DARKBROWN  CLITERAL(Color){ 76, 63, 47, 255 }      // Dark Brown
+#define CYAN       CLITERAL(Color){ 0, 255, 255, 255 }     // Cyan
+#define LIGHTBLUE  CLITERAL(Color){ 137, 231, 255, 255 }   // Light Blue
+#define LIGHTGREEN CLITERAL(Color){ 176, 255, 137, 255 }   // Light Green
+#define LIGHTCYAN  CLITERAL(Color){ 164, 255, 249, 255 }   // Light Cyan
+#define LIGHTMAGENTA CLITERAL(Color){ 255, 128, 255, 255 } // Light Magenta
+#define LIGHTRED   CLITERAL(Color){ 255, 128, 128, 255 }   // Light Red
 
 #define WHITE      CLITERAL(Color){ 255, 255, 255, 255 }   // White
 #define BLACK      CLITERAL(Color){ 0, 0, 0, 255 }         // Black

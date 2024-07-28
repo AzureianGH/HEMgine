@@ -23,3 +23,6 @@ run: $(TARGET)
 
 rhdpi: $(TARGET)
 	$(TARGET) --highdpi
+
+azure: $(TARGET)
+	$(TARGET) --highdpi -m 1g

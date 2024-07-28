@@ -1,2 +1,6 @@
 
 bin/main.exe
+*.o
+*.o
+src/basics.o
+*.o

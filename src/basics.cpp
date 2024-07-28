@@ -1,5 +1,20 @@
 #include <basics.h>
 #include <idt.h>
+
+uint32_t MemorySize = 0;
+uint8_t Memory[0x100000]; // 1MB of memory
+
+void SetupStack()
+{
+    SetRegister32(CBP, 0x0);
+    SetRegister32(CSP, 0x0);
+    Stack = new uint8_t[0x100000];
+    for (int i = 0; i < 0x100000; i++)
+    {
+        Stack[i] = 0;
+    }
+}
+
 uint32_t GetRegister32(CPURegister32_t reg)
 {
     return CPURegisters32[reg];
@@ -44,40 +59,92 @@ void SetFlag(CPUFlag_t flag, uint32_t value)
     CPUFlags = (CPUFlags & ~(1 << flag)) | (value << flag);
 }
 
-void PushStack(uint8_t* data, int size)
+void PushStack(CPURegister32_t Register, int size)
 {
-    //align into 4-byte chunks
-    int alignedSize = size + (4 - (size % 4));
-    //CBP is the base pointer
-    SetRegister32(CBP, GetRegister32(CBP) - alignedSize);
-    //copy data to stack
+    // Align 4 bytes
+    if (size % 4 != 0)
+    {
+        size += 4 - (size % 4);
+    }
+    // Check if we have enough space
+    if (GetRegister32(CSP) + size > 0x100000)
+    {
+        CallInterrupt(0xC); // Stack Overflow
+    }
+    // Copy the data to the stack
     for (int i = 0; i < size; i++)
     {
-        Stack[GetRegister32(CBP) + i] = data[i];
+        Stack[GetRegister32(CSP) + i] = GetRegister32(Register) & 0xFF;
+        SetRegister32(Register, GetRegister32(Register) >> 8);
     }
-    //zero out the rest of the space
-    for (int i = size; i < alignedSize; i++)
-    {
-        Stack[GetRegister32(CBP) + i] = 0;
-    }
+    // Update the stack pointer
+    SetRegister32(CSP, GetRegister32(CSP) + size);
 }
-
-void PopStack(uint8_t* data, int size)
+void DumpStack()
 {
-    //align into 4-byte chunks
-    int alignedSize = size + (4 - (size % 4));
-    //copy data from stack
+    //purple color
+    printf("\033[0;35m");
+    printf("Stack Dump: ");
+    int loops = 0;
+    for (int i = 0; i < GetRegister32(CSP); i++)
+    {
+        printf("%02X ", Stack[i]);
+        loops++;
+    }
+    if (loops == 0)
+    {
+        printf("Empty \033[0;32m<CSP == CBP>");
+    }
+    printf("\033[0m"); //reset color
+    printf("\n");
+}
+void PushStack(uint32_t value, int size)
+{
+    // Align 4 bytes
+    if (size % 4 != 0)
+    {
+        size += 4 - (size % 4);
+    }
+    // Check if we have enough space
+    if (GetRegister32(CSP) + size > 0x100000)
+    {
+        CallInterrupt(0xC); // Stack Overflow
+    }
+    // Copy the data to the stack
     for (int i = 0; i < size; i++)
     {
-        data[i] = Stack[GetRegister32(CBP) + i];
+        Stack[GetRegister32(CSP) + i] = value & 0xFF;
+        value = value >> 8;
     }
-    //CBP is the base pointer
-    SetRegister32(CBP, GetRegister32(CBP) + alignedSize);
+    // Update the stack pointer
+    SetRegister32(CSP, GetRegister32(CSP) + size);
+}
+void PopStack(CPURegister32_t Register, int size)
+{
+    // Align 4 bytes
+    if (size % 4 != 0)
+    {
+        size += 4 - (size % 4);
+    }
+    // Check if we have enough space
+    if (GetRegister32(CSP) - size < 0)
+    {
+        CallInterrupt(0xC); // Stack Underflow
+    }
+    // Copy the data from the stack
+    for (int i = 0; i < size; i++)
+    {
+        SetRegister32(Register, GetRegister32(Register) << 8 | Stack[GetRegister32(CSP) - i - 1]);
+    }
+    // Update the stack pointer
+    SetRegister32(CSP, GetRegister32(CSP) - size);
 }
 
 void SetMemorySize(uint32_t size)
 {
     MemorySize = size;
+    Memory = new uint8_t[size];
+    SetDefaultMemory();
 }
 
 void SetMemoryAddress(int address, int value)

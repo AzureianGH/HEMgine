@@ -25,3 +25,5 @@ extern bool Haltflag;
 void InitDefaultBIOSIDT();
 void SetIDTEntry(uint8_t index, int MemoryAddress);
 void CallInterrupt(uint8_t interrupt);
+void DisableInterrupts();
+void EnableInterrupts();

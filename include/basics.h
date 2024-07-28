@@ -112,23 +112,26 @@ typedef enum CPUFLAG_E
     ID = 15 // Identification Flag
 } CPUFlag_t;
 
+
+
 static uint32_t CPURegisters32[12] = {0}; // 12 32-bit registers
+static std::string CPURegisterNames32[12] = {"AS", "RA", "RB", "RC", "RD", "RR", "CSP", "CBP", "CIP", "CFLAGS", "CSI", "CDI"};
 static uint16_t CPURegisters16[12] = {0}; // 12 16-bit registers
 static uint8_t CPURegisters8[12] = {0}; // 12 8-bit registers
 
 static uint32_t CPUFlags = 0; // 32-bit flags register
 
-static uint8_t Stack[0x100000] = {0}; // 1MB stack
+static uint8_t* Stack; // 1MB stack
 static uint8_t ArgumentStack[0x100000] = {0}; // 1MB argument stack
 
-static uint32_t MemorySize;
-static uint8_t* Memory;
+extern uint32_t MemorySize;
+
 
 
 // Vector of protected memory
 static std::vector<BIOSProtectedMemory_t> ProtectedMemory;
 static std::vector<MemoryMapping_t> MemoryMappings;
-
+void SetupStack();
 uint32_t GetRegister32(CPURegister32_t reg);
 uint16_t GetRegister16(CPURegister16_t reg);
 uint8_t GetRegister8(CPURegister8_t reg);
@@ -140,8 +143,10 @@ void SetRegister8(CPURegister8_t reg, uint8_t value);
 uint32_t GetFlag(CPUFlag_t flag);
 void SetFlag(CPUFlag_t flag, uint32_t value);
 
-void PushStack(uint8_t* data, int size);
-void PopStack(uint8_t* data, int size);
+void PushStack(CPURegister32_t Register, int size);
+void PopStack(CPURegister32_t Register, int size);
+void PushStack(uint32_t value, int size);
+void DumpStack();
 
 void SetMemorySize(uint32_t size);
 
