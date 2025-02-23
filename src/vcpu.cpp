@@ -220,6 +220,116 @@ void RunVCPU()
                 #endif
                 SetRegister32(CIP, GetRegister32(CIP) + 2);
                 break;
+            case 0x0A: // movw reg, reg
+                if (!IsInMemory(GetRegister32(CIP)))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                if (!IsInMemory(GetRegister32(CIP) + 1))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                if (!IsInMemory(GetRegister32(CIP) + 2))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                //check if the register is a valid 0-11
+                if (GetMemoryAddress8(GetRegister32(CIP)) < 0 || GetMemoryAddress8(GetRegister32(CIP)) > 11)
+                {
+                    printf("Invalid Register: %02X\n", GetMemoryAddress8(GetRegister32(CIP)));
+                    CallInterrupt(0x06); // Invalid Opcode
+                    break;
+                }
+                if (GetMemoryAddress8(GetRegister32(CIP) + 1) < 0 || GetMemoryAddress8(GetRegister32(CIP) + 1) > 11)
+                {
+                    printf("Invalid Register: %02X\n", GetMemoryAddress8(GetRegister32(CIP) + 1));
+                    CallInterrupt(0x06); // Invalid Opcode
+                    break;
+                }
+                SetRegister16((CPURegister16_t)GetMemoryAddress8(GetRegister32(CIP)), GetRegister16((CPURegister16_t)GetMemoryAddress8(GetRegister32(CIP) + 1)));
+                #ifdef VERBOSEVCPU
+                    printf("movw reg, reg, CIP: %08X\n", GetRegister32(CIP));
+                #endif
+                SetRegister32(CIP, GetRegister32(CIP) + 2);
+                break;
+            case 0x0B: // movl reg, reg
+                if (!IsInMemory(GetRegister32(CIP)))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                if (!IsInMemory(GetRegister32(CIP) + 1))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                if (!IsInMemory(GetRegister32(CIP) + 2))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                //check if the register is a valid 0-11
+                if (GetMemoryAddress8(GetRegister32(CIP)) < 0 || GetMemoryAddress8(GetRegister32(CIP)) > 11)
+                {
+                    printf("Invalid Register: %02X\n", GetMemoryAddress8(GetRegister32(CIP)));
+                    CallInterrupt(0x06); // Invalid Opcode
+                    break;
+                }
+                if (GetMemoryAddress8(GetRegister32(CIP) + 1) < 0 || GetMemoryAddress8(GetRegister32(CIP) + 1) > 11)
+                {
+                    printf("Invalid Register: %02X\n", GetMemoryAddress8(GetRegister32(CIP) + 1));
+                    CallInterrupt(0x06); // Invalid Opcode
+                    break;
+                }
+                SetRegister32((CPURegister32_t)GetMemoryAddress8(GetRegister32(CIP)), GetRegister32((CPURegister32_t)GetMemoryAddress8(GetRegister32(CIP) + 1)));
+                #ifdef VERBOSEVCPU
+                    printf("movl reg, reg, CIP: %08X\n", GetRegister32(CIP));
+                #endif
+                SetRegister32(CIP, GetRegister32(CIP) + 2);
+                break;
+            case 0x0C: // movb mem, reg
+                if (!IsInMemory(GetRegister32(CIP)))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                if (!IsInMemory(GetRegister32(CIP) + 1))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                //check if the register is a valid 0-11
+                if (GetMemoryAddress8(GetRegister32(CIP) + 1) < 0 || GetMemoryAddress8(GetRegister32(CIP) + 1) > 11)
+                {
+                    printf("Invalid Register: %02X\n", GetMemoryAddress8(GetRegister32(CIP) + 1));
+                    CallInterrupt(0x06); // Invalid Opcode
+                    break;
+                }
+                SetMemoryAddress8(GetMemoryAddress32(GetRegister32(CIP)), GetRegister8((CPURegister8_t)GetMemoryAddress8(GetRegister32(CIP) + 1)));
+                #ifdef VERBOSEVCPU
+                    printf("movb %08X, reg, CIP: %08X\n", GetMemoryAddress32(GetRegister32(CIP)), GetRegister32(CIP));
+                #endif
+                SetRegister32(CIP, GetRegister32(CIP) + 2);
+                break;
             default:
                 printf("Unknown Instruction: %02X\n", instruction);
                 CallInterrupt(0x06); // Invalid Opcode

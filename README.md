@@ -4,7 +4,18 @@ Hydrix Emulator Engine
 
 ## Overview
 
-HEMgine is an emulator engine designed to perform various emulation tasks. The project is primarily written in C++, leveraging the Raylib library for graphical output and additional functionalities. The goal of HEMgine is to show what can be done with enough patience and (no) will.
+HEMgine is an emulator engine designed to perform various emulation tasks. The project is primarily written in C++, the Raylib library for graphical output and additional functionalities. The goal of HEMgine is to show what can be done with enough patience and (no) will.
+
+## Important!
+- The emulator does NOT come with a BIOS. You will need to provide your own BIOS file to run the emulator.
+- For example:
+```c++
+int* fileSize = (int*)malloc(sizeof(int));
+uint8_t* BIOS = LoadFileData("resource/yourbiosfile.leaf", fileSize);
+SetDefaultProtectedMemory((uint64_t)*fileSize);
+LoadIntoMemory(BIOS, 0x0, *fileSize, false, true); // Loads bios and forces past read-only protection
+InitVCPU();
+```
 
 ## Repository Structure
 
@@ -20,8 +31,8 @@ HEMgine is an emulator engine designed to perform various emulation tasks. The p
   - `libraylib.a`: Static library for Raylib, used for rendering graphics and handling various multimedia tasks.
 
 - **resource/**: Resource files used by the emulator.
-  - `HEM.png`: An image file, possibly used for branding or in the emulator's GUI.
-  - `MD.ttf`: A TrueType font file, likely used for rendering text in the emulator.
+  - `HEM.png`: Logo file, used for branding.
+  - `MD.ttf`: A TrueType font file, for rendering text in the emulator (VGA).
 
 - **src/**: Source code files implementing the core functionalities of the emulator.
   - `basics.cpp`, `basics.o`: Implementation of basic definitions and utility functions.
