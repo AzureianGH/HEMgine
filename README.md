@@ -7,8 +7,8 @@ Hydrix Emulator Engine
 HEMgine is an emulator engine designed to perform various emulation tasks. The project is primarily written in C++, the Raylib library for graphical output and additional functionalities. The goal of HEMgine is to show what can be done with enough patience and (no) will.
 
 ## Important!
-- The emulator does NOT come with a BIOS. You will need to provide your own BIOS file to run the emulator.
-- For example:
+- The emulator does NOT come with a BIOS. You will need to provide your own BIOS file to run the emulator. (This is temporary and will be changed in the future once a stable BIOS is created)
+For example:
 ```c++
 int* fileSize = (int*)malloc(sizeof(int));
 uint8_t* BIOS = LoadFileData("resource/yourbiosfile.leaf", fileSize);
