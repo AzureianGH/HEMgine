@@ -8,7 +8,8 @@ HEMgine is an emulator engine designed to perform various emulation tasks. The p
 
 ## Important!
 - The emulator does NOT come with a BIOS. You will need to provide your own BIOS file to run the emulator. (This is temporary and will be changed in the future once a stable BIOS is created)
-For example:
+<br>
+Here is an example of how to load a BIOS file into the emulator:
 ```c++
 int* fileSize = (int*)malloc(sizeof(int));
 uint8_t* BIOS = LoadFileData("resource/yourbiosfile.leaf", fileSize);
