@@ -3,8 +3,9 @@
 #include <basics.h>
 #include <printer.h>
 #include <debuggerprint.h>
+#include <vcpu.h>
 using namespace std;
-#define DEBUGVGA
+//#define DEBUGVGA
 #define DEBUGIDT
 IDTEntry_t BIOSIDT[BIOS_IDT_SIZE];
 bool Haltflag = false;
@@ -81,6 +82,28 @@ void NULLInterruptCall()
     return;
 }
 
+void Debug()
+{
+    DumpStack();
+    DumpMemory(0x10000, 0x10010);
+    //Dump the registers
+    for (int i = 1; i < 5; i++)
+    {
+        cout << "Register " << CPURegisterNames32[i] << ": " << IntToHexString(GetRegister32((CPURegister32_t)i));
+        if (GetRegister32((CPURegister32_t)i) >= 0x20 && GetRegister32((CPURegister32_t)i) <= 0x7E)
+        {
+            cout << " ('" << (char)GetRegister32((CPURegister32_t)i) << "')";
+        }
+        //check if the hex is a valid 0-255, if so ColorToString in []
+        if (GetRegister32((CPURegister32_t)i) >= 0x0 && GetRegister32((CPURegister32_t)i) <= 0xFF)
+        {
+            cout << " [" << ColorToString(GetRegister32((CPURegister32_t)i)) << "]";
+        }
+        cout << endl;
+    }
+    return;
+}
+
 void TripleFault()
 {
     //set console color to red with printf
@@ -89,6 +112,7 @@ void TripleFault()
     printf("\033[0m");
     VGAPrint("CPU ENTERED SHUTDOWN STATE, VM HALTED.", 0, 0, 0x0C);
     Haltflag = true;
+    SetWindowTitle("HEMgine - Shutdown");
     return;
 }
 void InitDefaultBIOSIDT() // First memory addresses are reserved for BIOS interrupts 0-255
@@ -105,6 +129,9 @@ void InitDefaultBIOSIDT() // First memory addresses are reserved for BIOS interr
 
     //set the default bios interrupt 0x0
     SetIDTEntry(0x0, 0x0);
+
+    //set the debug interrupt 0x03
+    SetIDTEntry(0x3, 0x3);
 
     //set int flag
     SetFlag(IF, 1);
@@ -195,6 +222,14 @@ void CallInterrupt(uint8_t interrupt)
     if (BIOSIDT[interrupt].MemoryAddress == 0x0)
     {
         NULLInterruptCall();
+    }
+    else if (interrupt == 0x0)
+    {
+        DivByZero();
+    }
+    else if (interrupt == 0x3)
+    {
+        Debug();
     }
     //double fault
     else if (interrupt == 0x8)

@@ -1,6 +1,7 @@
 #include <basics.h>
 #include <idt.h>
 #include <debuggerprint.h>
+#include <vcpu.h>
 uint32_t MemorySize = 0;
 uint8_t* Memory = nullptr; // 1MB of memory
 
@@ -85,7 +86,7 @@ void PushStack(CPURegister32_t Register, int size)
         size += 4 - (size % 4);
     }
     // Check if we have enough space
-    if (GetRegister32(CSP) + size > 0x100000)
+    if (GetRegister32(CSP) + size > 0xFFFFFFFF)
     {
         CallInterrupt(0xC); // Stack Overflow
     }
@@ -175,6 +176,9 @@ void SetMemoryAddress8(uint32_t address, uint8_t value)
     if (Haltflag) return;
     if (IsProtectedMemory(address))
     {
+        #ifdef VERBOSEVCPU
+        printf("Protected Memory Access Violation at Address: %08X\n", address);
+        #endif
         CallInterrupt(0xD); // General Protection Fault because we are trying to write to protected memory
     }
     Memory[address] = value;
@@ -184,6 +188,9 @@ void SetMemoryAddress16(uint32_t address, uint16_t value)
     if (Haltflag) return;
     if (IsProtectedMemory(address))
     {
+        #ifdef VERBOSEVCPU
+        printf("Protected Memory Access Violation at Address: %08X\n", address);
+        #endif
         CallInterrupt(0xD); // General Protection Fault because we are trying to write to protected memory
     }
     Memory[address] = value & 0xFF;
@@ -194,6 +201,9 @@ void SetMemoryAddress32(uint32_t address, uint32_t value)
     if (Haltflag) return;
     if (IsProtectedMemory(address))
     {
+        #ifdef VERBOSEVCPU
+        printf("Protected Memory Access Violation at Address: %08X\n", address);
+        #endif
         CallInterrupt(0xD); // General Protection Fault because we are trying to write to protected memory
     }
     Memory[address] = value & 0xFF;
@@ -203,7 +213,15 @@ void SetMemoryAddress32(uint32_t address, uint32_t value)
 }
 
 
-
+bool IsInMemory(uint32_t address)
+{
+    if (Haltflag) return false;
+    if (address >= MemorySize)
+    {
+        return false;
+    }
+    return true;
+}
 uint8_t GetMemoryAddress8(uint32_t address)
 {
     if (Haltflag) return 0;
@@ -435,11 +453,11 @@ void SetDefaultStack()
 
 
 
-void SetDefaultProtectedMemory()
+void SetDefaultProtectedMemory(uint64_t BiosSize)
 {
     if (Haltflag) return;
     //set the first mb of memory to be protected
-    BIOSProtectedMemory_t protectedMemory = {0, 0x100000};
+    BIOSProtectedMemory_t protectedMemory = {0, BiosSize};
     ProtectedMemory.push_back(protectedMemory);
 
 }
@@ -464,20 +482,25 @@ uint8_t* LoadFromMemory(int StartAddress, int EndAddress, bool BIOSOffsetted, bo
     return data;
 }
 
-bool LoadIntoMemory(uint8_t *Data, int StartAddress, int Size, bool BIOSOffsetted)
+bool LoadIntoMemory(uint8_t *Data, int StartAddress, int Size, bool BIOSOffsetted, bool Force)
 {
-    if (Haltflag) return false;
-
+    if (Haltflag ||!Data || !Memory) return false;
+    
     if (BIOSOffsetted)
     {
         StartAddress += 0x100000;
     }
 
-    //if protected memory, return false and call interrupt
-    if (IsProtectedMemoryRange(StartAddress, StartAddress + sizeof(Data)))
+    if (!Force)
     {
-        CallInterrupt(0xD); // General Protection Fault
-        return false;
+        if (IsProtectedMemoryRange(StartAddress, StartAddress + sizeof(Data)))
+        {
+            #ifdef VERBOSEVCPU
+            printf("Protected Memory Access Violation at Address: %08X\n", StartAddress);
+            #endif
+            CallInterrupt(0xD); // General Protection Fault
+            return false;
+        }
     }
 
     for (int i = 0; i < Size; i++)
@@ -492,10 +515,4 @@ void SetDefaultMemory()
 {
     if (Haltflag) return;
     memset(Memory, 0, MemorySize);
-    //set first bytes to "HEMgine" as the BIOS signature
-    uint8_t BIOS[] = {0x48, 0x45, 0x4D, 0x67, 0x69, 0x6E, 0x65};
-    for (int i = 0; i < sizeof(BIOS) / sizeof(uint8_t); i++)
-    {
-        Memory[i] = BIOS[i];
-    }
 }

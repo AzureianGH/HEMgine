@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <basics.h>
+//#define VERBOSEVCPU
 enum class VCPUState
 {
     RUNNING, // Normal operation
@@ -16,7 +17,7 @@ enum class VCPUState
     SHUTDOWN // Triple fault
 };
 
-void InitVCPU(uint8_t* Program, uint32_t Size);
+void InitVCPU();
 
 void RunVCPU();
 

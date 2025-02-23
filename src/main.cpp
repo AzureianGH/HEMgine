@@ -11,7 +11,14 @@
 #include <idt.h>
 #include <printer.h>
 #include <debuggerprint.h>
+#include <atomic>
 using namespace std;
+
+uint64_t cycles_per_sec = 0;
+
+std::atomic<uint64_t> cycleCount;
+
+
 uint32_t ParseMemorySize(char* memsize)
 {
     //there should be a number at the start of the string and a letter at the end
@@ -60,12 +67,17 @@ void PrintVGAString(char* str)
         CallInterrupt(0x15);
     }
 }
-typedef struct TestStruct
+
+void RunThread()
 {
-    uint32_t a;
-    uint32_t b;
-    uint32_t c;
-} TestStruct;
+    while (!WindowShouldClose())
+    {
+        RunVCPU();
+        //increment cycle count using atomic
+        std::atomic_fetch_add(&cycleCount, 1);
+    }
+}
+
 int main(int argc, char** argv)
 {
     //check dpi of screen
@@ -116,6 +128,18 @@ int main(int argc, char** argv)
             }
         }
     }
+    else
+    {
+        SetMemorySize(0x10000); // 64kb
+        //light cyan
+        printf("\033[0;36m");
+        printf("HEMgine Virtual Machine\n", 0, 0, 0x0B);
+        //light green memory size
+        printf("\033[0;32m");
+        printf("Memory Size: %d bytes\n", MemorySize);
+        printf("\033[0m"); //reset color
+        MemorySet = true;
+    }
     
     InitWindow(720, 400, "HEMgine");
     SetTargetFPS(60);
@@ -123,40 +147,37 @@ int main(int argc, char** argv)
     SetWindowIcon(icon);
     Font TextModeVGA = LoadFontEx("resource/MD.ttf", 16, NULL, 0);
     //allocate 100 mb of memory
-    
+    int* fileSize = (int*)malloc(sizeof(int));
+    uint8_t* BIOS = LoadFileData("resource/hem-bios-0x00001.leaf", fileSize);
+    printf("BIOS Size: %d bytes\n", *fileSize);
     InitVGAPrinter();
     InitDefaultBIOSIDT();
     SetupStack();
     SetDefaultMemory();
-    SetDefaultProtectedMemory();
-    
-    TestStruct test;
-    test.a = 0x1;
-    test.b = 0x2;
-    test.c = 0x3;
-
-    //load test struct into memory
-    LoadIntoMemory((uint8_t*)&test, 0x1, sizeof(TestStruct), true);
-
-    //load bios tag from memory, 0x0 -> 0x8
-    char* BiosTag = (char*)LoadFromMemory(0x0, 0x8, false);
-
-    PrintVGAString(BiosTag);
-    DumpMemory(0x0, 0x10);
-    printf("\n");
-    //dump memory of test struct
-    DumpMemory(0x1000001, 0x1000001 + sizeof(TestStruct));
-    
-    
+    SetDefaultProtectedMemory((uint64_t)*fileSize);
+    BIOSProtectedMemory_t mem = GetProtectedMemory();
+    printf("Protected Memory: %08X - %08X\n", mem.StartAddress, mem.EndAddress);
+    LoadIntoMemory(BIOS, 0x0, *fileSize, false, true);
+    InitVCPU();
+    thread vcpuThread(RunThread);
+    auto lastTime = std::chrono::steady_clock::now();
     while (!WindowShouldClose())
     {
         BeginDrawing();
         ClearBackground(BLACK);
         PrintVGABuffer();
         EndDrawing();
+        SetWindowTitle(TextFormat("HEMgine - %llu Cycles/Sec (GHz: %f) (MHz %f)", cycles_per_sec, cycles_per_sec / 1000000000.0, cycles_per_sec / 1000000.0));
+        auto currentTime = std::chrono::steady_clock::now();
+        std::chrono::duration<double> elapsedTime = currentTime - lastTime;
+        if (elapsedTime.count() >= 1.0)
+        {
+            cycles_per_sec = cycleCount;
+            cycleCount = 0;
+            lastTime = currentTime;
+        }
     }
-    
-
     CloseWindow();
+    vcpuThread.join();
     return EXIT_SUCCESS;
 }

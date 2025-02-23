@@ -127,7 +127,7 @@ static uint8_t ArgumentStack[0x100000] = {0}; // 1MB argument stack
 
 extern uint32_t MemorySize;
 
-
+bool IsInMemory(uint32_t address);
 
 // Vector of protected memory
 static std::vector<BIOSProtectedMemory_t> ProtectedMemory;
@@ -169,7 +169,7 @@ void SetDefaultRegisters();
 void SetDefaultFlags();
 void SetDefaultStack();
 void SetDefaultMemory();
-void SetDefaultProtectedMemory();
+void SetDefaultProtectedMemory(uint64_t BiosSize);
 
 void SetDefaultMemoryMappings();
 void SetDefaultMemoryMapping(int start, int end, MemoryMappingType_t type, int redirect);
@@ -181,5 +181,5 @@ uint8_t GetMemoryAddress8(uint32_t address);
 uint16_t GetMemoryAddress16(uint32_t address);
 uint32_t GetMemoryAddress32(uint32_t address);
 void DumpMemory(int Start, int End);
-bool LoadIntoMemory(uint8_t *Data, int StartAddress, int Size, bool BIOSOffsetted = true);
+bool LoadIntoMemory(uint8_t *Data, int StartAddress, int Size, bool BIOSOffsetted = true, bool Force = false);
 uint8_t* LoadFromMemory(int StartAddress, int EndAddress, bool BIOSOffsetted = true, bool TreatEndAsSize = false);

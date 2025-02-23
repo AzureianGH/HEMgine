@@ -4,3 +4,7 @@ bin/main.exe
 *.o
 src/basics.o
 *.o
+bin/resource/hem-bios-0x00001.leaf
+resource/hem-bios-0x00001.leaf
+resource/hem-bios-0x00001.leaf.bak
+Summ.zip

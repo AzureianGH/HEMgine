@@ -25,4 +25,4 @@ rhdpi: $(TARGET)
 	$(TARGET) --highdpi
 
 azure: $(TARGET)
-	$(TARGET) -m 50m
+	$(TARGET) -m 50m --highdpi 
