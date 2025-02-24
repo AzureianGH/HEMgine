@@ -310,25 +310,140 @@ void RunVCPU()
                     state = VCPUState::HALTED;
                     break;
                 }
-                if (!IsInMemory(GetRegister32(CIP) + 1))
+                if (!IsInMemory(GetRegister32(CIP) + 4))
                 {
                     printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
                     CallInterrupt(0x0D); // General Protection Fault
                     state = VCPUState::HALTED;
                     break;
                 }
-                //check if the register is a valid 0-11
-                if (GetMemoryAddress8(GetRegister32(CIP) + 1) < 0 || GetMemoryAddress8(GetRegister32(CIP) + 1) > 11)
+                SetMemoryAddress8(GetMemoryAddress32(GetRegister32(CIP)), GetRegister8((CPURegister8_t)GetMemoryAddress8(GetRegister32(CIP) + 4)));
+                #ifdef VERBOSEVCPU
+                    printf("movb %08X, %02X, CIP: %08X\n", GetMemoryAddress32(GetRegister32(CIP)), GetRegister8((CPURegister8_t)GetMemoryAddress8(GetRegister32(CIP) + 2)), GetRegister32(CIP));
+                #endif
+                SetRegister32(CIP, GetRegister32(CIP) + 5);
+                break;
+            case 0x0D: // movw mem, reg
+                if (!IsInMemory(GetRegister32(CIP)))
                 {
-                    printf("Invalid Register: %02X\n", GetMemoryAddress8(GetRegister32(CIP) + 1));
-                    CallInterrupt(0x06); // Invalid Opcode
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
                     break;
                 }
-                SetMemoryAddress8(GetMemoryAddress32(GetRegister32(CIP)), GetRegister8((CPURegister8_t)GetMemoryAddress8(GetRegister32(CIP) + 1)));
+                if (!IsInMemory(GetRegister32(CIP) + 4))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                SetMemoryAddress16(GetMemoryAddress32(GetRegister32(CIP)), GetRegister16((CPURegister16_t)GetMemoryAddress8(GetRegister32(CIP) + 4)));
                 #ifdef VERBOSEVCPU
-                    printf("movb %08X, reg, CIP: %08X\n", GetMemoryAddress32(GetRegister32(CIP)), GetRegister32(CIP));
+                    printf("movw %08X, %04X, CIP: %08X\n", GetMemoryAddress32(GetRegister32(CIP)), GetRegister16((CPURegister16_t)GetMemoryAddress8(GetRegister32(CIP) + 2)), GetRegister32(CIP));
                 #endif
-                SetRegister32(CIP, GetRegister32(CIP) + 2);
+                SetRegister32(CIP, GetRegister32(CIP) + 5);
+                break;
+            case 0x0E: // movl mem, reg
+                if (!IsInMemory(GetRegister32(CIP)))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                if (!IsInMemory(GetRegister32(CIP) + 4))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                SetMemoryAddress32(GetMemoryAddress32(GetRegister32(CIP)), GetRegister32((CPURegister32_t)GetMemoryAddress8(GetRegister32(CIP) + 4)));
+                #ifdef VERBOSEVCPU
+                    printf("movl %08X, %08X, CIP: %08X\n", GetMemoryAddress32(GetRegister32(CIP)), GetRegister32((CPURegister32_t)GetMemoryAddress8(GetRegister32(CIP) + 2)), GetRegister32(CIP));
+                #endif
+                SetRegister32(CIP, GetRegister32(CIP) + 5);
+                break;
+            case 0x0F: // movb reg, mem
+                //example: 0F 01 00 00 02 00 (01 is the register, 00 00 02 00 is the address to load from)
+                if (!IsInMemory(GetRegister32(CIP)))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                if (!IsInMemory(GetRegister32(CIP) + 4))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                SetRegister8((CPURegister8_t)GetMemoryAddress8(GetRegister32(CIP)), GetMemoryAddress8(GetMemoryAddress32(GetRegister32(CIP) + 1)));
+                #ifdef VERBOSEVCPU
+                    printf("movb reg, mem, CIP: %08X\n", GetRegister32(CIP));
+                #endif
+                SetRegister32(CIP, GetRegister32(CIP) + 5);
+                break;
+            case 0x10: // movw reg, mem
+                //example: 10 01 00 00 02 00 (01 is the register, 00 00 02 00 is the address to load from)
+                if (!IsInMemory(GetRegister32(CIP)))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                if (!IsInMemory(GetRegister32(CIP) + 4))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                SetRegister16((CPURegister16_t)GetMemoryAddress8(GetRegister32(CIP)), GetMemoryAddress16(GetMemoryAddress32(GetRegister32(CIP) + 1)));
+                #ifdef VERBOSEVCPU
+                    printf("movw reg, mem, CIP: %08X\n", GetRegister32(CIP));
+                #endif
+                SetRegister32(CIP, GetRegister32(CIP) + 5);
+                break;
+            case 0x11: // movl reg, mem
+                //example: 11 01 00 00 02 00 (01 is the register, 00 00 02 00 is the address to load from)
+                if (!IsInMemory(GetRegister32(CIP)))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                if (!IsInMemory(GetRegister32(CIP) + 4))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                SetRegister32((CPURegister32_t)GetMemoryAddress8(GetRegister32(CIP)), GetMemoryAddress32(GetMemoryAddress32(GetRegister32(CIP) + 1)));
+                #ifdef VERBOSEVCPU
+                    printf("movl reg, mem, CIP: %08X\n", GetRegister32(CIP));
+                #endif
+                SetRegister32(CIP, GetRegister32(CIP) + 5);
+                break;
+            case 0x12: // br_s (branch short range)
+                //example: br_s -1 (12 FF) and that would be a jump to the previous instruction
+                if (!IsInMemory(GetRegister32(CIP)))
+                {
+                    printf("Memory boundary access violation at CIP: %08X\n", GetRegister32(CIP));
+                    CallInterrupt(0x0D); // General Protection Fault
+                    state = VCPUState::HALTED;
+                    break;
+                }
+                SetRegister32(CIP, GetRegister32(CIP) + (int8_t)GetMemoryAddress8(GetRegister32(CIP)));
+                #ifdef VERBOSEVCPU
+                    printf("br_s %02X, CIP: %08X\n", GetMemoryAddress8(GetRegister32(CIP)), GetRegister32(CIP));
+                #endif
                 break;
             default:
                 printf("Unknown Instruction: %02X\n", instruction);

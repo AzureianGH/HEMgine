@@ -5,7 +5,7 @@
 #include <debuggerprint.h>
 #include <vcpu.h>
 using namespace std;
-//#define DEBUGVGA
+#define DEBUGVGA
 #define DEBUGIDT
 IDTEntry_t BIOSIDT[BIOS_IDT_SIZE];
 bool Haltflag = false;
@@ -20,8 +20,6 @@ void BIOSInterruptCall()
         {
             // print character to screen at VGAIndex, 80 characters per line, 25 lines
             VGAPrintChar(GetRegister32(RC), GetVGAIndex() % 80, GetVGAIndex() / 80, GetRegister32(RD));
-
-            SetRegister32(CIP, GetRegister32(CIP) + 1);
             return;
         }
         else if (GetRegister32(RB) == 0x1)
@@ -39,7 +37,7 @@ void BIOSInterruptCall()
             }
             // set VGAIndex to RC
             SetVGAIndex(GetRegister32(RC));
-            SetRegister32(CIP, GetRegister32(CIP) + 1);
+            
             return;
         }
         else if (GetRegister32(RB) == 0x2)
@@ -50,7 +48,7 @@ void BIOSInterruptCall()
                 VGAPrintChar(' ', i % 80, i / 80, 0x0);
             }
             SetVGAIndex(0);
-            SetRegister32(CIP, GetRegister32(CIP) + 1);
+            
             return;
         }
         
@@ -85,7 +83,7 @@ void NULLInterruptCall()
 void Debug()
 {
     DumpStack();
-    DumpMemory(0x10000, 0x10010);
+    DumpMemory(0x0, 0xA5);
     //Dump the registers
     for (int i = 1; i < 5; i++)
     {
@@ -113,6 +111,7 @@ void TripleFault()
     VGAPrint("CPU ENTERED SHUTDOWN STATE, VM HALTED.", 0, 0, 0x0C);
     Haltflag = true;
     SetWindowTitle("HEMgine - Shutdown");
+    Debug();
     return;
 }
 void InitDefaultBIOSIDT() // First memory addresses are reserved for BIOS interrupts 0-255
